@@ -1,0 +1,93 @@
+---
+title: "Things"
+format: html
+---
+
+```{r}
+library(OTools)
+library(seacarb)
+```
+
+```{r}
+specpH(salinity = 29.3,temp=21.3,B434 = 0.011,B578 = 0.006,B730 = 0.008,
+        A434 = 0.555,A578 = 0.320,A730 = 0.011)
+```
+
+```{r}
+set=matrix(NA,nrow=4,ncol=9)
+test=c(29.3,21.3,0.553,0.323,0.001,0.003,0.006,0.008)
+set[1,1:8]=test
+set[1,9]=specpH(test[1],test[2],test[3],test[4],test[5],test[6],test[7],test[8])
+
+```
+
+```{r}
+counter=2
+
+for (i in 1:10000) {
+  test=c(
+    round(jitter(29.3,factor=0.5),1),
+    round(jitter(21.3,factor=0.5),1),
+    round(jitter(0.553,factor=5),4),
+    round(jitter(0.323,factor=5),4),
+    round(rnorm(1,mean=0.003,sd=0.002),3),
+    round(rnorm(1,mean=0.003,sd=0.002),3),
+    round(rnorm(1,mean=0.003,sd=0.002),3),
+    round(rnorm(1,mean=0.003,sd=0.002),3)
+  )
+  test.ph=specpH(test[1],test[2],test[3],test[4],test[5],test[6],test[7],test[8])
+  test.ph
+  if (7.512>test.ph&test.ph>7.486){
+    set[counter,1:8]=test
+    set[counter,9]=test.ph
+    counter=counter+1
+  }
+}
+
+```
+
+
+
+```{r}
+mean(set[,9])
+sd(set[,9])
+```
+
+
+```{r}
+set2=matrix(NA,nrow=4,ncol=9)
+test=c(29.3,21.3,0.426,1.194,0.001,0.002,0.002,0.003)
+set2[1,1:8]=test
+set2[1,9]=specpH(test[1],test[2],test[3],test[4],test[5],test[6],test[7],test[8])
+
+```
+
+```{r}
+counter=2
+
+for (i in 1:10000) {
+  test=c(
+    round(jitter(29.3,factor=0.5),1),
+    round(jitter(21.3,factor=0.5),1),
+    round(jitter(0.396,factor=6),4),
+    round(jitter(1.394,factor=6),4),
+    round(rnorm(1,mean=0.003,sd=0.002),3),
+    round(rnorm(1,mean=0.003,sd=0.002),3),
+    round(rnorm(1,mean=0.003,sd=0.002),3),
+    round(rnorm(1,mean=0.003,sd=0.002),3)
+  )
+  test.ph=specpH(test[1],test[2],test[3],test[4],test[5],test[6],test[7],test[8])
+  test.ph
+  if (8.24<test.ph&test.ph<8.45){
+    set2[counter,1:8]=test
+    set2[counter,9]=test.ph
+    counter=counter+1
+  }
+}
+
+```
+
+```{r}
+write.csv(rbind(set,set2),file = "anemone_spec_ph_data.csv",row.names = F)
+```
+

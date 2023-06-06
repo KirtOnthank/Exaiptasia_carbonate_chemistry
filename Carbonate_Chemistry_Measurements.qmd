@@ -1,0 +1,170 @@
+---
+title: "Exaiptasia Carbonate Chemistry Calculations"
+author: "Kirt L Onthank"
+format: docx
+---
+
+```{r}
+library(remotes)
+#install_github("KirtOnthank/OTools")
+#install_version("seacarb",version="3.2.14")
+library(OTools)
+library(seacarb)
+library(knitr)
+
+```
+
+
+
+
+```{r}
+ph=read.csv("anemone_spec_ph_data.csv")
+ph$ph=specpH(ph$sal,ph$temp,ph$A434,ph$A578,ph$A730,ph$B434,ph$B578,ph$B730)
+
+paste(round(mean(ph$ph[ph$tank=="CTRL"]),3),"±",round(sd(ph$ph[ph$tank=="CTRL"]),3))
+
+paste(round(mean(ph$ph[ph$tank=="OA"]),3),"±",round(sd(ph$ph[ph$tank=="OA"]),3))
+
+mean(ph$ph[ph$tank=="OA"])
+
+sd(ph$ph[ph$tank=="OA"])
+
+ph$pco2=0
+
+
+
+```
+
+# Alkalinity calculation
+
+```{r}
+alk.ctrl1=read.csv("Alk_CTRL_8-5-22.csv")
+alk.ctrl2=read.csv("Alk_CTRL_8-9-22.csv")
+alk.oa1=read.csv("Alk_OA_8-5-22.csv")
+alk.oa2=read.csv("Alk_OA_8-9-22.csv")
+
+alks=c(
+at(
+  S=alk.ctrl1$S[1],
+  T=alk.ctrl1$T,
+  C=alk.ctrl1$C[1],
+  pHTris=alk.ctrl1$pHTris[1],
+  ETris=alk.ctrl1$ETris[1],
+  weight=alk.ctrl1$weight[1],
+  E=alk.ctrl1$E,
+  volume=alk.ctrl1$Volume
+  )[1],
+
+at(
+  S=alk.ctrl2$S[1],
+  T=alk.ctrl2$T,
+  C=alk.ctrl2$C[1],
+  pHTris=alk.ctrl2$pHTris[1],
+  ETris=alk.ctrl2$ETris[1],
+  weight=alk.ctrl2$weight[1],
+  E=alk.ctrl2$E,
+  volume=alk.ctrl2$Volume
+  )[1],
+
+at(
+  S=alk.oa1$S[1],
+  T=alk.oa1$T,
+  C=alk.oa1$C[1],
+  pHTris=alk.oa1$pHTris[1],
+  ETris=alk.oa1$ETris[1],
+  weight=alk.oa1$weight[1],
+  E=alk.oa1$E,
+  volume=alk.oa1$Volume
+  )[1],
+
+at(
+  S=alk.oa2$S[1],
+  T=alk.oa2$T,
+  C=alk.oa2$C[1],
+  pHTris=alk.oa2$pHTris[1],
+  ETris=alk.oa2$ETris[1],
+  weight=alk.oa2$weight[1],
+  E=alk.oa2$E,
+  volume=alk.oa2$Volume
+  )[1]
+)
+
+paste(
+  round(mean(alks[1:2]*1000000)),
+  "±",
+  round(sd(alks[1:2]*1000000))
+)
+
+paste(
+  round(mean(alks[3:4]*1000000)),
+  "±",
+  round(sd(alks[3:4]*1000000))
+)
+
+
+```
+
+# Calculating pCO~2~
+```{r}
+ph$pco2[ph$tank=="CTRL"]=carb(8,ph$ph[ph$tank=="CTRL"],mean(alks[1:2]),S=ph$ph[ph$tank=="CTRL"],T=ph$temp[ph$tank=="CTRL"])$pCO2
+
+ph$pco2[ph$tank=="OA"]=carb(8,ph$ph[ph$tank=="OA"],mean(alks[1:2]),S=ph$ph[ph$tank=="OA"],T=ph$temp[ph$tank=="OA"])$pCO2
+
+```
+
+
+# Per treatment summary
+Next, I want to summarize the condition actually experienced by octopuses in each treatment. 
+```{r}
+
+
+treatment.sum=data.frame(
+  Treatment=c("Control","Elevated CO~2~"),
+
+  pCO2=c(
+    paste0(round(mean(ph$pco2[ph$tank=="CTRL"]),0),"±",round(sd(ph$pco2[ph$tank=="CTRL"]),0)),
+    paste0(round(mean(ph$pco2[ph$tank=="OA"]),0),"±",round(sd(ph$pco2[ph$tank=="OA"]),0))
+    ),
+
+  pH=c(
+    paste0(round(mean(ph$ph[ph$tank=="CTRL"]),3),"±",round(sd(ph$ph[ph$tank=="CTRL"]),3)),
+    paste0(round(mean(ph$ph[ph$tank=="OA"]),3),"±",round(sd(ph$ph[ph$tank=="OA"]),3))
+    ),
+
+  Alkalinity=c(
+    paste(
+      round(mean(alks[1:2]*1000000)),
+      "±",
+      round(sd(alks[1:2]*1000000))
+    ),
+
+    paste(
+      round(mean(alks[3:4]*1000000)),
+      "±",
+      round(sd(alks[3:4]*1000000))
+    )
+    ),
+  Salinity=c(
+    paste0(round(mean(ph$sal[ph$tank=="CTRL"]),1),"±",round(sd(ph$sal[ph$tank=="CTRL"]),1)),
+    paste0(round(mean(ph$sal[ph$tank=="OA"]),1),"±",round(sd(ph$sal[ph$tank=="OA"]),1))
+  ),
+  
+  Temperature=c(
+    paste0(round(mean(ph$temp[ph$tank=="CTRL"]),1),"±",round(sd(ph$temp[ph$tank=="CTRL"]),1)),
+    paste0(round(mean(ph$temp[ph$tank=="OA"]),1),"±",round(sd(ph$temp[ph$tank=="OA"]),1))
+  )
+
+)
+
+colnames(treatment.sum)[2]="pCO~2~ ($\\mu$atm)"
+colnames(treatment.sum)[4]="Alkalinity ($\\mu$mol kg^-1^)"
+colnames(treatment.sum)[5]="Salinity (PSU)"
+colnames(treatment.sum)[6]="Temperature (C)"
+
+
+```
+
+```{r}
+kable(treatment.sum,align="c")
+```
+
